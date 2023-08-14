@@ -1,0 +1,7 @@
+sudo apt-get install tk-dev
+pyenv install 3.10-dev
+pyenv install 3.10
+pyenv local 3.10
+poetry init
+poetry env use 3.10
+poetry shell

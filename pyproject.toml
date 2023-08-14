@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "flexai-backend"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = []
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.101.0"
+uvicorn = {extras = ["standard"], version = "^0.23.2"}
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.19"}
+asyncpg = "^0.28.0"
+alembic = "^1.11.2"
+greenlet = "^2.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
