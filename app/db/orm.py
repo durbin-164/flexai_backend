@@ -1,26 +1,27 @@
-from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from __future__ import annotations
 
-# from app.api import model
+import datetime
+from typing import List
 
+from sqlalchemy import String, DateTime, func
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import relationship
 
-# map_registry = registry().map_imperatively
-
-
-class Base(AsyncAttrs, DeclarativeBase):
-    pass
-
-
-class User(Base):
-    __tablename__ = "users"
-    user_name: Mapped[str] = mapped_column(primary_key=True)
-    password: Mapped[str]
-    first_name: Mapped[str]
-    last_name: Mapped[str]
+from app.db.database_engine import Base
+from app.db.permission import Group, Role, Permission
+from app.db.permission_mixin import PermissionMixin, FullPermissionMixin
 
 
-# map_registry = Base.registry.map_imperatively
+class User(Base, PermissionMixin):
+    __tablename__ = 'users'
+    mixins = [FullPermissionMixin]
 
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
-# def start_mapping():
-#     map_registry(model.user.User, User.__table__)
+    groups: Mapped[List[Group]] = relationship("Group", secondary='user_group_association', back_populates="users")
+    roles: Mapped[List[Role]] = relationship("Role", secondary='user_role_association', back_populates="users")
+    permissions: Mapped[List[Permission]] = relationship("Permission", secondary='user_permission_association',
+                                                         back_populates="users")

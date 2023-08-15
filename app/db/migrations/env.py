@@ -1,3 +1,7 @@
+import nest_asyncio
+
+nest_asyncio.apply()
+
 import asyncio
 from logging.config import fileConfig
 

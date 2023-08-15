@@ -383,6 +383,17 @@ files = [
 ]
 
 [[package]]
+name = "nest-asyncio"
+version = "1.5.7"
+description = "Patch asyncio to allow nested event loops"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "nest_asyncio-1.5.7-py3-none-any.whl", hash = "sha256:5301c82941b550b3123a1ea772ba9a1c80bad3a182be8c1a5ae6ad3be57a9657"},
+    {file = "nest_asyncio-1.5.7.tar.gz", hash = "sha256:6a80f7b98f24d9083ed24608977c09dd608d83f91cccc24c9d2cba6d10e01c10"},
+]
+
+[[package]]
 name = "pydantic"
 version = "2.1.1"
 description = "Data validation using Python type hints"
@@ -880,4 +891,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "dadd066280452676860338ae0936e86bdd6502f5dad01908eab5fe807d4d77e2"
+content-hash = "21bee054d5b7993abf803a6e757011f1a0672a13cd2e50e85fcb930b4a24be15"
