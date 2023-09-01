@@ -19,6 +19,9 @@ class User(Base, PermissionMixin):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(50))
+    last_name: Mapped[str] = mapped_column(String(50))
+    is_active: Mapped[bool]
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
     groups: Mapped[List[Group]] = relationship("Group", secondary='user_group_association', back_populates="users")
