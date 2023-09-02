@@ -1,4 +1,5 @@
 import uvicorn
 from app.main import app
+from app.core.config import settings
 
-uvicorn.run(app, host="0.0.0.0", port=8000)
+uvicorn.run(app, host=settings.app.host, port=settings.app.port)

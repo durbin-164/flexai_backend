@@ -2,8 +2,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-URL = "postgresql+asyncpg://root:root12345@0.0.0.0:5432/flexai_local"
+from app.core.config import settings
 
+# URL = "postgresql+asyncpg://root:root12345@0.0.0.0:5432/flexai_local"
+URL = settings.db.url
 engine = create_async_engine(
     URL,
     # echo=True,

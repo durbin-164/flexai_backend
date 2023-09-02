@@ -8,7 +8,8 @@ packages = []
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.101.0"
+fastapi = "^0.103.0"
+pydantic = "^2.3.0"
 uvicorn = {extras = ["standard"], version = "^0.23.2"}
 sqlalchemy = {extras = ["asyncio"], version = "^2.0.19"}
 asyncpg = "^0.28.0"
@@ -18,6 +19,7 @@ nest-asyncio = "^1.5.7"
 passlib = "^1.7.4"
 python-jose = "^3.3.0"
 python-multipart = "^0.0.6"
+pydantic-settings = "^2.0.3"
 
 
 [build-system]
