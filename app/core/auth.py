@@ -5,10 +5,12 @@ from fastapi.security import SecurityScopes
 from jose import jwt, JWTError
 from pydantic import ValidationError
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from starlette import status
 
 from app.api import model
 from app.api.model.user import TokenData
+from app.constant.application_enum import ScopeEnum
 from app.core.config import settings
 from app.core.security import oauth2_scheme
 from app.db import orm
@@ -33,15 +35,19 @@ async def get_current_user(
         if username is None:
             raise credentials_exception
 
-        token_scopes = payload.get("scopes", [])
-        token_data = TokenData(scopes=token_scopes, username=username)
+        # token_scopes = payload.get("scopes", [])
+        # token_data = TokenData(scopes=token_scopes, username=username)
     except (JWTError, ValidationError):
         raise credentials_exception
 
     async with async_session() as session:
-        stmt = select(orm.User).filter_by(username=token_data.username).limit(1)
+        stmt = select(orm.User).filter(orm.User.username == username).options(
+            joinedload(orm.User.permissions),
+            joinedload(orm.User.roles).options(joinedload(orm.Role.permissions)),
+            # joinedload(orm.Role.permissions)
+        ).limit(1)
         user = await session.execute(stmt)
-        user = user.scalar()
+        user: orm.User = user.scalar()
 
     if user is None:
         raise credentials_exception
@@ -49,8 +55,16 @@ async def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
 
+    user_permissions = set()
+    permission_names = set(map(lambda permission: permission.name, user.permissions))
+    user_permissions.update(permission_names)
+
+    for role in user.roles:
+        permission_names = set(map(lambda permission: permission.name, role.permissions))
+        user_permissions.update(permission_names)
+
     for scope in security_scopes.scopes:
-        if scope not in token_data.scopes:
+        if scope not in user_permissions:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not enough permissions",
@@ -60,7 +74,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-        current_user: Annotated[model.user.User, Security(get_current_user, scopes=["me"])]
+        current_user: Annotated[model.user.User, Security(get_current_user, scopes=[ScopeEnum.USERS_GET])]
 ):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")

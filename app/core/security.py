@@ -21,9 +21,10 @@ def verify_password(password, hashed_password) -> bool:
     return pwd_context.verify(password, hashed_password)
 
 
-def create_token(data: dict, expires_delta: timedelta | None = None):
+def create_token(data: dict, expires_delta: int | None = None):
     to_encode = data.copy()
     if expires_delta:
+        expires_delta = timedelta(minutes=expires_delta)
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.jwt.access_token_expire_minutes)

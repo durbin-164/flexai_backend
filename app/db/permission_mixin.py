@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy import event, select, delete
 
+
 class CreatePermissionMixin:
     permissions = ["create"]
 
@@ -69,5 +70,3 @@ class PermissionMixin:
     def add_events(cls):
         event.listen(cls.__table__, 'after_create', cls.create_permissions)
         event.listen(cls.__table__, 'after_drop', cls.delete_permissions)
-
-

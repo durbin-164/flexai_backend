@@ -6,6 +6,7 @@ class JWTSettings(BaseModel):
     secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+    refresh_token_expire_minutes: int = 1440  # 1 day
 
 
 class DBSettings(BaseModel):
@@ -24,7 +25,7 @@ class AppSettings(BaseModel):
     name: str = "Flex AI"
     host: str = "0.0.0.0"
     port: int = 8080
-    token_url: str = '/user/token'
+    token_url: str = '/auth/token'
 
 
 class Settings(BaseSettings):

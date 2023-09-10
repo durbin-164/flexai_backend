@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
 
 
-class IUserService(ABC):
+class IAuthService(ABC):
     pass
