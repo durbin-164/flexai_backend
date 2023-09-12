@@ -9,7 +9,6 @@ from sqlalchemy.orm import joinedload
 from starlette import status
 
 from app.api import model
-from app.api.model.user import TokenData
 from app.constant.application_enum import ScopeEnum
 from app.core.config import settings
 from app.core.security import oauth2_scheme

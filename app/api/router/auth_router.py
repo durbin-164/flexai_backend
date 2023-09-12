@@ -3,7 +3,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Security
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.api.model.user import UserSignup, UserLogin, LoginToken, User
+from app.api.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword
+from app.constant.application_enum import ScopeEnum
 from app.core.auth import get_current_active_user
 from app.service.impl.auth_service import AuthService
 
@@ -29,3 +30,9 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
 @router.get('/me', summary='Get details of currently logged in user', response_model=User, status_code=200)
 async def get_me(user: Annotated[User, Security(get_current_active_user)]):
     return user
+
+
+@router.patch('/change-password', summary='Password Change', status_code=200)
+async def patch(password_change: UserChangePaasword,
+                user: Annotated[User, Security(get_current_active_user, scopes=[ScopeEnum.USERS_UPDATE])]):
+    return await auth_service.change_password(user=user, password_change=password_change)

@@ -12,7 +12,7 @@ class UpdatePermissionMixin:
 
 
 class GetPermissionMixin:
-    permissions = ["get"]
+    permissions = ["get", "get_all"]
 
 
 class DeletePermissionMixin:

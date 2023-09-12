@@ -1,9 +1,8 @@
 from fastapi import HTTPException
-from sqlalchemy import select
-from sqlalchemy.orm.decl_base import _is_supercls_for_inherits
+from sqlalchemy import select, update
 from starlette import status
 
-from app.api.model.user import UserSignup, UserLogin, LoginToken
+from app.api.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword
 from app.constant.application_enum import UserRoleEnum
 from app.core.config import settings
 from app.core.security import get_password_hash, verify_password, create_token
@@ -84,7 +83,19 @@ class AuthService(IAuthService):
             )
             return user_token
 
+    async def change_password(self, user: User, password_change: UserChangePaasword):
+        if not verify_password(password=password_change.previous_password, hashed_password=user.password):
+            raise HTTPException(
+                detail="Invalid previous password",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
 
+        new_hashed_password = get_password_hash(password_change.new_password)
 
+        async with async_session() as session:
+            stmt = update(orm.User).where(orm.User.username == user.username).values(password=new_hashed_password)
+            await session.execute(stmt)
+            await session.commit()
 
+        return 'Successfully change password'
 
