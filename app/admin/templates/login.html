@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="d-flex align-content-center justify-content-center p-5">
+       <div class="row">
+           <h1 class="text-primary">Please Login</h1>
+            <form method="POST">
+            <div class="mb-3">
+              <label>Email</label>
+              <input type="text" required placeholder="Your email" name="username" value="{{email}}" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label>Password</label>
+              <input type="password" required placeholder="Choose a secure password" value="{{password}}" name="password" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+      {% if error %}
+        <p class="error"><strong>Error:</strong> {{ error }}
+      {% endif %}
+    </div>
+{% endblock content %}

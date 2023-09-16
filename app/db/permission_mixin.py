@@ -36,20 +36,32 @@ class PermissionMixin:
 
     @classmethod
     def create_permissions(cls, session):
-        from app.db.permission import Permission
+        from app.db.permission import Permission, ContentType
         if hasattr(cls, "mixins"):
             permissions = []
             for mixin in cls.mixins:
                 permissions.extend(mixin.permissions)
             permissions = list(set(permissions))
+            model_name = cls.__tablename__
+
+            stmt = select(ContentType).filter(ContentType.model == model_name).limit(1)
+            content_model = session.execute(stmt)
+            content_model = content_model.first()
+
+            if not content_model:
+                content_model = ContentType(model=model_name)
+                session.add(content_model)
+                session.flush()
+                session.refresh(content_model)
+
             for permission in permissions:
-                permission_name = f"{cls.__tablename__}_{permission}"
+                permission_name = f"{model_name}_{permission}"
                 stmt = select(Permission).filter_by(name=permission_name).limit(1)
                 permission_obj = session.execute(stmt)
                 permission_obj = permission_obj.first()
 
                 if not permission_obj:
-                    permission_obj = Permission(name=permission_name)
+                    permission_obj = Permission(name=permission_name, content_type_id=content_model.id)
                     session.add(permission_obj)
             session.commit()
 

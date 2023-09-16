@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 
 from app.db.database_engine import Base
 from app.db.permission import Role, Permission
-from app.db.permission import UserPermissionAssociation, RolePermissionAssociation, UserRoleAssociation
+from app.db.permission import UserPermissionAssociation, RolePermissionAssociation, UserRoleAssociation, ContentType # dont remove this line
 from app.db.permission_mixin import PermissionMixin, FullPermissionMixin
 
 
@@ -26,7 +26,7 @@ class User(Base, PermissionMixin):
     last_name: Mapped[str] = mapped_column(String(50))
     is_active: Mapped[bool]
     is_super_user: Mapped[bool]
-    is_stuff: Mapped[bool]
+    is_staff: Mapped[bool]
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
     roles: Mapped[List[Role]] = relationship("Role", secondary='user_role_association')

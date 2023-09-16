@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Title: Users</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="/admin/add-user" class="btn btn-success">Add User</a>
+        </div>
+    </div>
+    <!-- {{ content_type }} List -->
+    <table class="table mt-3">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Username</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>is_staff</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for index, user in content_list %}
+                <tr>
+                    <td>{{ index }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.first_name }}</td>
+                    <td>{{ user.last_name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.is_staff }}</td>
+                    <td>
+                        <a href="#edit-user/{{ user.id }}" class="btn btn-primary btn-sm">Edit</a>
+                    </td>
+                    <td>
+                        <a href="#delete-user/{{ user.id }}" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="mb-3">
+        <a href="/admin/dashboard" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+
+{% endblock content %}

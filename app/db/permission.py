@@ -1,11 +1,19 @@
+import datetime
 from typing import List
 
-from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy import Integer, String, ForeignKey, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship
 
 from app.db.database_engine import Base
 from app.db.permission_mixin import PermissionMixin
+
+class ContentType(Base):
+    __tablename__ = 'content_types'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
 
 class Permission(Base, PermissionMixin):
@@ -13,6 +21,8 @@ class Permission(Base, PermissionMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    content_type_id: Mapped[int] = mapped_column(Integer, ForeignKey('content_types.id'), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
 
 class Role(Base, PermissionMixin):
@@ -20,6 +30,7 @@ class Role(Base, PermissionMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
     permissions: Mapped[List[Permission]] = relationship("Permission", secondary='role_permission_association')
 
@@ -29,6 +40,7 @@ class UserRoleAssociation(Base):
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), primary_key=True)
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey('roles.id'), primary_key=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
 
 class UserPermissionAssociation(Base):
@@ -36,6 +48,7 @@ class UserPermissionAssociation(Base):
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('users.id'), primary_key=True)
     permission_id: Mapped[int] = mapped_column(Integer, ForeignKey('permissions.id'), primary_key=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())
 
 
 class RolePermissionAssociation(Base):
@@ -43,3 +56,4 @@ class RolePermissionAssociation(Base):
 
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey('roles.id'), primary_key=True)
     permission_id: Mapped[int] = mapped_column(Integer, ForeignKey('permissions.id'), primary_key=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=func.now())

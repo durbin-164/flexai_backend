@@ -16,9 +16,7 @@ from app.db import orm
 from app.db.database_engine import async_session
 
 
-async def get_current_user(
-        security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)]
-):
+async def get_valid_user(security_scopes: SecurityScopes, token: str) -> orm.User:
     if security_scopes.scopes:
         authenticate_value = f'Bearer scope="{security_scopes.scope_str}"'
     else:
@@ -54,6 +52,9 @@ async def get_current_user(
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
 
+    if user.is_super_user:
+        return user
+
     user_permissions = set()
     permission_names = set(map(lambda permission: permission.name, user.permissions))
     user_permissions.update(permission_names)
@@ -70,6 +71,13 @@ async def get_current_user(
                 headers={"WWW-Authenticate": authenticate_value},
             )
     return user
+
+
+async def get_current_user(
+        security_scopes: SecurityScopes, token: Annotated[str, Depends(oauth2_scheme)]
+):
+    return await get_valid_user(security_scopes=security_scopes,
+                                token=token)
 
 
 async def get_current_active_user(

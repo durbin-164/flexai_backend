@@ -13,9 +13,9 @@ engine = create_async_engine(
 
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 
-sync_engine = create_engine(URL)
-
-sync_session = sessionmaker(sync_engine)
+# sync_engine = create_engine(URL)
+#
+# sync_session = sessionmaker(sync_engine)
 
 
 class Base(AsyncAttrs, DeclarativeBase):

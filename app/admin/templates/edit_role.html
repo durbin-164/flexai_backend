@@ -1,0 +1,81 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1 class="text-primary">Edit Role</h1>
+            <form method="post" class="mt-4">
+                <input type="hidden" id="role_id" name="role_id" value="{{ role.id }}">
+                <div class="mb-3">
+                    <label for="role_name" class="form-label">Role Name:</label>
+                    <input type="text" id="role_name" name="role_name" class="form-control" value="{{role.name}}" required readonly>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Permissions:</label>
+                    <br>
+                    <div class="row">
+                        <!-- Loop through permission groups using Jinja2 -->
+                        {% for content, permissions in permission_groups %}
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-link text-primary" onclick="toggleGroup('{{ content[1] }}')">
+                                    <i id="{{ content[1] }}-icon" class="bi bi-plus-circle-fill text-primary"></i> {{ content[1] }}
+                                </button>
+                                <ul id="{{ content[1] }}-subfields" class="subfields" style="display: none;">
+                                    <li>
+                                        <input type="checkbox" id="select-all-{{ content[1] }}" onclick="toggleGroupCheckbox('{{ content[1] }}')" class="form-check-input select-all-checkbox">
+                                        <label for="select-all-{{ content[1] }}" class="form-check-label text-danger">Select All</label>
+                                    </li>
+                                    <!-- Loop through subfields within each group -->
+                                    {% for permission in permissions %}
+                                        <li>
+                                            <input type="checkbox" class="form-check-input {{ content[1] }}-checkbox" id="{{ permission[1] }}" name="permissions" value="{{ permission[0] }}" {% if permission[0] in selected_permissions %}checked{% endif %}>
+                                            <label for="{{ permission[1] }}" class="form-check-label text-success">{{ permission[1] }}</label>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <a href="/admin/roles" class="btn btn-secondary">Back</a>
+                    <input type="submit" value="Edit Role" class="btn btn-primary">
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JavaScript function to toggle visibility of subfields and update icon
+    function toggleGroup(groupName) {
+        const subfields = document.querySelector(`#${groupName}-subfields`);
+        const icon = document.querySelector(`#${groupName}-icon`);
+
+        if (subfields.style.display === 'none' || subfields.style.display === '') {
+            subfields.style.display = 'block';
+            icon.classList.remove('bi-plus-circle-fill');
+            icon.classList.add('bi-dash-circle-fill', 'text-danger');
+        } else {
+            subfields.style.display = 'none';
+            icon.classList.remove('bi-dash-circle-fill', 'text-danger');
+            icon.classList.add('bi-plus-circle-fill', 'text-primary');
+        }
+    }
+
+    // JavaScript function to handle "Select All" checkbox behavior
+    function toggleGroupCheckbox(groupName) {
+        const groupCheckboxes = document.querySelectorAll(`.${groupName}-checkbox`);
+        const selectAllCheckbox = document.querySelector(`#select-all-${groupName}`);
+
+        // If the "Select All" checkbox is checked, select all checkboxes in the group
+        groupCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+</script>
+{% endblock content %}

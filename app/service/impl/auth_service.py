@@ -22,7 +22,7 @@ class AuthService(IAuthService):
             last_name=user_signup.last_name,
             is_active=True,
             is_super_user=False,
-            is_stuff=False
+            is_staff=False
         )
 
         async with async_session() as session:
@@ -63,7 +63,7 @@ class AuthService(IAuthService):
             stmt = select(orm.User).filter_by(username=user_login.username).limit(1)
             user = await session.execute(stmt)
             user = user.scalar()
-            if not user:
+            if not user or not user.is_active:
                 raise HTTPException(
                     detail="Invalid username.",
                     status_code=status.HTTP_401_UNAUTHORIZED
