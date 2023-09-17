@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Request, Depends, Security, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete
 from sqlalchemy.orm import joinedload
 from starlette import status
 from starlette.responses import HTMLResponse, RedirectResponse
@@ -10,6 +10,7 @@ from starlette.templating import Jinja2Templates
 
 from app.admin.service.auth_service import COOKIE_NAME, get_active_stuff_user
 from app.api.model.user import UserLogin
+from app.constant.application_enum import ScopeEnum
 from app.core.security import get_password_hash
 from app.db import orm
 from app.db.database_engine import async_session
@@ -55,7 +56,10 @@ async def get_dashboard(request: Request, user: Annotated[orm.User, Security(get
 
 
 @router.get("/add-user", response_class=HTMLResponse)
-async def get_add_user_form(request: Request, user: Annotated[orm.User, Security(get_active_stuff_user)]):
+async def get_add_user_form(request: Request, user: Annotated[orm.User, Security(get_active_stuff_user,
+                                                                                 scopes=[ScopeEnum.USERS_CREATE,
+                                                                                         ScopeEnum.ROLES_GET,
+                                                                                         ScopeEnum.ROLES_GET_ALL])]):
     async with async_session() as session:
         stmt = select(orm.Role)
         roles = await session.execute(stmt)
@@ -70,26 +74,11 @@ async def get_add_user_form(request: Request, user: Annotated[orm.User, Security
     return templates.TemplateResponse("add_user.html", context=context)
 
 
-@router.get("/users", response_class=HTMLResponse)
-async def get_users(request: Request, user: Annotated[orm.User, Security(get_active_stuff_user)]):
-    async with async_session() as session:
-        stmt = select(orm.User)
-        users = await session.execute(stmt)
-        users = list(users.scalars())
-
-    content_list = enumerate(users, start=1)
-
-    context = {
-        'request': request,
-        'user': user,
-        'content_type': "User",
-        'content_list': content_list
-    }
-    return templates.TemplateResponse("users_list.html", context=context)
-
-
 @router.post("/add-user", response_class=HTMLResponse)
-async def add_user(request: Request, user: Annotated[orm.User, Security(get_active_stuff_user)]):
+async def add_user(request: Request, user: Annotated[orm.User, Security(get_active_stuff_user,
+                                                                        scopes=[ScopeEnum.USERS_CREATE,
+                                                                                ScopeEnum.ROLES_GET,
+                                                                                ScopeEnum.ROLES_GET_ALL])]):
     form_data = await request.form()
     roles = form_data.getlist("roles")
 
@@ -131,8 +120,28 @@ async def add_user(request: Request, user: Annotated[orm.User, Security(get_acti
     return RedirectResponse("/admin/users", status.HTTP_302_FOUND)
 
 
+@router.get("/users", response_class=HTMLResponse)
+async def get_users(request: Request,
+                    user: Annotated[orm.User, Security(get_active_stuff_user, scopes=[ScopeEnum.USERS_GET_ALL])]):
+    async with async_session() as session:
+        stmt = select(orm.User)
+        users = await session.execute(stmt)
+        users = list(users.scalars())
+
+    content_list = enumerate(users, start=1)
+
+    context = {
+        'request': request,
+        'user': user,
+        'content_type': "User",
+        'content_list': content_list
+    }
+    return templates.TemplateResponse("users_list.html", context=context)
+
+
 @router.get("/roles", response_class=HTMLResponse)
-async def get_roles(request: Request, user: Annotated[orm.User, Security(get_active_stuff_user)]):
+async def get_roles(request: Request,
+                    user: Annotated[orm.User, Security(get_active_stuff_user, scopes=[ScopeEnum.ROLES_GET_ALL])]):
     async with async_session() as session:
         stmt = select(orm.Role)
         roles = await session.execute(stmt)
@@ -150,7 +159,8 @@ async def get_roles(request: Request, user: Annotated[orm.User, Security(get_act
 
 
 @router.get("/add-role", response_class=HTMLResponse)
-async def get_role_form(request: Request, user: Annotated[orm.User, Security(get_active_stuff_user)]):
+async def get_role_form(request: Request, user: Annotated[
+    orm.User, Security(get_active_stuff_user, scopes=[ScopeEnum.ROLES_CREATE, ScopeEnum.PERMISSIONS_GET_ALL])]):
     async with async_session() as session:
         stmt = select(
             func.row(orm.ContentType.id, orm.ContentType.name).label('contain_types'),
@@ -176,7 +186,8 @@ async def get_role_form(request: Request, user: Annotated[orm.User, Security(get
 
 
 @router.post("/add-role", response_class=HTMLResponse)
-async def add_role(request: Request, user: Annotated[orm.User, Security(get_active_stuff_user)]):
+async def add_role(request: Request, user: Annotated[
+    orm.User, Security(get_active_stuff_user, scopes=[ScopeEnum.ROLES_CREATE, ScopeEnum.PERMISSIONS_GET_ALL])]):
     form_data = await request.form()
     permissions = form_data.getlist("permissions")
 
@@ -211,7 +222,8 @@ async def add_role(request: Request, user: Annotated[orm.User, Security(get_acti
 
 
 @router.get("/edit-role/{role_id}", response_class=HTMLResponse)
-async def get_edit_role(request: Request, role_id: int, user: Annotated[orm.User, Security(get_active_stuff_user)]):
+async def get_edit_role(request: Request, role_id: int, user: Annotated[
+    orm.User, Security(get_active_stuff_user, scopes=[ScopeEnum.ROLES_UPDATE, ScopeEnum.PERMISSIONS_GET_ALL])]):
     async with async_session() as session:
         stmt = select(orm.Role).where(orm.Role.id == role_id).options(joinedload(orm.Role.permissions))
         role = await session.execute(stmt)
@@ -245,7 +257,8 @@ async def get_edit_role(request: Request, role_id: int, user: Annotated[orm.User
 
 
 @router.post("/edit-role/{role_id}", response_class=HTMLResponse)
-async def edit_role(request: Request, role_id: int, user: Annotated[orm.User, Security(get_active_stuff_user)]):
+async def edit_role(request: Request, role_id: int, user: Annotated[
+    orm.User, Security(get_active_stuff_user, scopes=[ScopeEnum.ROLES_UPDATE, ScopeEnum.PERMISSIONS_GET_ALL])]):
     form_data = await request.form()
     permissions = form_data.getlist("permissions")
 
@@ -255,14 +268,21 @@ async def edit_role(request: Request, role_id: int, user: Annotated[orm.User, Se
         db_role = db_role.scalars().first()
 
         selected_permissions = set([p.id for p in db_role.permissions])
+        permissions = set([int(p_id) for p_id in permissions])
 
         for p_id in permissions:
-            if int(p_id) not in selected_permissions:
+            if p_id not in selected_permissions:
                 new_permission = orm.RolePermissionAssociation(
                     role_id=db_role.id,
                     permission_id=int(p_id)
                 )
                 session.add(new_permission)
+
+        for p_id in selected_permissions:
+            if p_id not in permissions:
+                stmt = delete(orm.RolePermissionAssociation).where(orm.RolePermissionAssociation.role_id == role_id,
+                                                                   orm.RolePermissionAssociation.permission_id == p_id)
+                await session.execute(stmt)
 
         await session.commit()
 
