@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Request, Depends, Security, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func, delete, update
 from sqlalchemy.orm import joinedload
 from starlette import status
 from starlette.responses import HTMLResponse, RedirectResponse
@@ -137,6 +137,82 @@ async def get_users(request: Request,
         'content_list': content_list
     }
     return templates.TemplateResponse("users_list.html", context=context)
+
+
+@router.get("/edit-user/{user_id}", response_class=HTMLResponse)
+async def get_edit_user_form(request: Request, user_id: int, user: Annotated[orm.User, Security(get_active_stuff_user,
+                                                                                                scopes=[
+                                                                                                    ScopeEnum.USERS_GET_ALL,
+                                                                                                    ScopeEnum.USERS_UPDATE,
+                                                                                                    ScopeEnum.ROLES_GET,
+                                                                                                    ScopeEnum.ROLES_GET_ALL])]):
+    async with async_session() as session:
+        stmt = select(orm.User).where(orm.User.id == user_id).options(joinedload(orm.User.roles))
+        edit_user = await session.execute(stmt)
+        edit_user = edit_user.scalars().first()
+
+        stmt = select(orm.Role)
+        roles = await session.execute(stmt)
+        roles = list(roles.scalars())
+
+    selected_roles = set([r.id for r in edit_user.roles])
+
+    context = {
+        'request': request,
+        'title': "Edit User",
+        'user': user,
+        'edit_user': edit_user,
+        'roles': roles,
+        'selected_roles': selected_roles
+    }
+    return templates.TemplateResponse("edit_user.html", context=context)
+
+
+@router.post("/edit-user/{user_id}", response_class=HTMLResponse)
+async def post_edit_user(request: Request, user_id: int, user: Annotated[orm.User, Security(get_active_stuff_user,
+                                                                                            scopes=[
+                                                                                                ScopeEnum.USERS_GET_ALL,
+                                                                                                ScopeEnum.USERS_UPDATE,
+                                                                                                ScopeEnum.ROLES_GET,
+                                                                                                ScopeEnum.ROLES_GET_ALL])]):
+    form_data = await request.form()
+    new_roles = form_data.getlist("roles")
+
+    async with async_session() as session:
+        stmt = select(orm.User).where(orm.User.id == user_id).options(joinedload(orm.User.roles))
+        edit_user = await session.execute(stmt)
+        edit_user = edit_user.scalars().first()
+
+        if form_data.get('password'):
+            edit_user.password = get_password_hash(form_data.get('password'))
+
+        edit_user.first_name = form_data.get('first_name')
+        edit_user.last_name = form_data.get('last_name')
+        edit_user.email = form_data.get('email')
+        edit_user.phone = form_data.get('phone')
+        edit_user.is_active = form_data.get('is_active').lower() == "true"
+        edit_user.is_staff = form_data.get('is_staff').lower() == "true"
+
+        previous_roles = set([r.id for r in edit_user.roles])
+        new_roles = set([int(r_id) for r_id in new_roles])
+
+        for role_id in new_roles:
+            if role_id not in previous_roles:
+                user_role_association = orm.UserRoleAssociation(
+                    user_id=edit_user.id,
+                    role_id=int(role_id)
+                )
+                session.add(user_role_association)
+
+        for p_role_id in previous_roles:
+            if p_role_id not in new_roles:
+                stmt = delete(orm.UserRoleAssociation).where(orm.UserRoleAssociation.user_id == edit_user.id,
+                                                             orm.UserRoleAssociation.role_id == p_role_id)
+                await session.execute(stmt)
+
+        await session.commit()
+
+    return RedirectResponse("/admin/users", status.HTTP_302_FOUND)
 
 
 @router.get("/roles", response_class=HTMLResponse)
