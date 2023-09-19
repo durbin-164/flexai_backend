@@ -36,3 +36,9 @@ async def get_me(user: Annotated[User, Security(get_current_active_user)]):
 async def patch(password_change: UserChangePaasword,
                 user: Annotated[User, Security(get_current_active_user, scopes=[ScopeEnum.USERS_UPDATE])]):
     return await auth_service.change_password(user=user, password_change=password_change)
+
+
+@router.get("/confirm/")
+async def confirm(token: str):
+    print(token)
+    return "successful to check token."

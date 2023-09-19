@@ -12,9 +12,8 @@ class User(BaseModel):
 
 
 class UserSignup(BaseModel):
-    username: str = Field(min_length=2, examples=['user1'])
-    password: str = Field(min_length=5, examples=['12345'])
     email: EmailStr = Field(examples=['user1@example.com'])
+    password: str = Field(min_length=5, examples=['12345'])
     phone: str = Field(min_length=5, examples=["+8801711244334"])
     first_name: str = Field(min_length=2, examples=['ABC'])
     last_name: str = Field(min_length=2, examples=['XYZ'])

@@ -21,11 +21,20 @@ class DBSettings(BaseModel):
         return f"postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.name}"
 
 
+class EMILSettings(BaseModel):
+    USERNAME: str
+    PASSWORD: str
+    FROM: str
+    PORT: int = 465
+    SERVER: str = "smtp.gmail.com"
+
+
 class AppSettings(BaseModel):
     name: str = "Flex AI"
     host: str = "0.0.0.0"
     port: int = 8080
     token_url: str = '/auth/token'
+    url: str = "http://localhost:8080"
 
 
 class Settings(BaseSettings):
@@ -38,6 +47,7 @@ class Settings(BaseSettings):
     app: AppSettings = AppSettings()
     db: DBSettings
     jwt: JWTSettings
+    EMAIL: EMILSettings
 
 
 settings = Settings()

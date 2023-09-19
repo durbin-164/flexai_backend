@@ -3,8 +3,10 @@ from sqlalchemy import select, update
 from starlette import status
 
 from app.api.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword
+from app.constant import application_constant
 from app.constant.application_enum import UserRoleEnum
 from app.core.config import settings
+from app.core.email_server import validate_email_format, EmailSchema, email_send
 from app.core.security import get_password_hash, verify_password, create_token
 from app.db import orm
 from app.db.database_engine import async_session
@@ -13,8 +15,10 @@ from app.service.iauth_service import IAuthService
 
 class AuthService(IAuthService):
     async def signup(self, user_signup: UserSignup):
+        await validate_email_format(user_signup.email)
+
         user = orm.User(
-            username=user_signup.username,
+            username=user_signup.email,
             password=get_password_hash(user_signup.password),
             email=user_signup.email,
             phone=user_signup.phone,
@@ -25,8 +29,17 @@ class AuthService(IAuthService):
             is_staff=False
         )
 
+        token = create_token(data={"sub": user.email}, expires_delta=1440)
+        link = f"{settings.app.url}/auth/confirm?token={token}"
+
+        email_verification_schema = EmailSchema(
+            emails=[user.email],
+            subject=application_constant.REGISTRATION_EMAIL_SUBJECT,
+            body=application_constant.REGISTRATION_EMAIL_BODY.format(link)
+        )
+
         async with async_session() as session:
-            stmt = select(orm.User).filter_by(username=user_signup.username).limit(1)
+            stmt = select(orm.User).filter_by(username=user.username).limit(1)
             db_user = await session.execute(stmt)
             db_user = db_user.scalar_one_or_none()
             if db_user:
@@ -53,6 +66,8 @@ class AuthService(IAuthService):
                 role_id=db_role.id
             )
             session.add(user_role_association)
+
+            await email_send(email=email_verification_schema)
 
             await session.commit()
 
@@ -98,4 +113,3 @@ class AuthService(IAuthService):
             await session.commit()
 
         return 'Successfully change password'
-
