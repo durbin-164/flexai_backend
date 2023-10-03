@@ -44,12 +44,12 @@ class PermissionMixin:
             permissions = list(set(permissions))
             model_name = cls.__tablename__
 
-            stmt = select(ContentType).filter(ContentType.model == model_name).limit(1)
+            stmt = select(ContentType).filter(ContentType.name == model_name).limit(1)
             content_model = session.execute(stmt)
             content_model = content_model.first()
 
             if not content_model:
-                content_model = ContentType(model=model_name)
+                content_model = ContentType(name=model_name)
                 session.add(content_model)
                 session.flush()
                 session.refresh(content_model)

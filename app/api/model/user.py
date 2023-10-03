@@ -2,6 +2,8 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
+from app.constant.application_enum import AuthProviderEnum
+
 
 class User(BaseModel):
     username: str
@@ -19,8 +21,13 @@ class UserSignup(BaseModel):
     last_name: str = Field(min_length=2, examples=['XYZ'])
 
 
+class UserSignupExternal(BaseModel):
+    provider: AuthProviderEnum = Field(examples=[AuthProviderEnum.GOOGLE])
+    token: str
+
+
 class UserLogin(BaseModel):
-    username: str = Field(min_length=2, examples=['user1'])
+    email: EmailStr = Field(examples=['user1@example.com'])
     password: str = Field(min_length=5, examples=['12345'])
 
 

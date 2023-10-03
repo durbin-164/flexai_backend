@@ -1,3 +1,5 @@
+import random
+import string
 from datetime import datetime, timedelta
 
 from fastapi.security import OAuth2PasswordBearer
@@ -31,3 +33,8 @@ def create_token(data: dict, expires_delta: int | None = None):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.jwt.secret_key, algorithm=settings.jwt.algorithm)
     return encoded_jwt
+
+
+def generate_random_password(length: int) -> str:
+    return ''.join(random.choices(string.ascii_letters +
+                                  string.digits, k=length))

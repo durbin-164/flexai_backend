@@ -1,7 +1,7 @@
 """init insert permission table
 
 Revision ID: 27a881adae7f
-Revises: 2de224550e7a
+Revises: 6f9530f462f3
 Create Date: 2023-09-11 00:25:39.367485
 
 """
@@ -16,7 +16,7 @@ from app.db.permission import Role, Permission
 
 # revision identifiers, used by Alembic.
 revision: str = '27a881adae7f'
-down_revision: Union[str, None] = '2de224550e7a'
+down_revision: Union[str, None] = '6f9530f462f3'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
