@@ -8,8 +8,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from starlette import status
 
-from app.api import model
-from app.constant.application_enum import ScopeEnum
+from app.authentication.constant.auth_enum import ScopeEnum
+from app.authentication.model import user
 from app.core.config import settings
 from app.core.security import oauth2_scheme
 from app.db import orm
@@ -81,7 +81,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-        current_user: Annotated[model.user.User, Security(get_current_user, scopes=[ScopeEnum.USERS_GET])]
+        current_user: Annotated[user.User, Security(get_current_user, scopes=[ScopeEnum.USERS_GET])]
 ):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")

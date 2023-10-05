@@ -2,10 +2,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Security
 
-from app.api.model.user import User, UserUpdate, UserChangePaasword
-from app.constant.application_enum import ScopeEnum
+from app.authentication.model.user import User, UserUpdate
+from app.authentication.constant.auth_enum import ScopeEnum
 from app.core.auth import get_current_active_user
-from app.service.impl.user_service import UserService
+from app.authentication.service.user_service import UserService
 
 router = APIRouter(prefix="/user", tags=['user'])
 

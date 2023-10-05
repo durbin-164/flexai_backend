@@ -3,20 +3,20 @@ from typing import Annotated
 
 from fastapi import APIRouter, Request, Depends, Security, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select, func, delete, update
+from sqlalchemy import select, func, delete
 from sqlalchemy.orm import joinedload
 from starlette import status
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.templating import Jinja2Templates
 
 from app.admin.service.auth_service import get_active_stuff_user
-from app.api.model.user import UserLogin
-from app.constant.application_enum import ScopeEnum
+from app.authentication.model.user import UserLogin
+from app.authentication.constant.auth_enum import ScopeEnum
 from app.core.config import settings
 from app.core.security import get_password_hash
 from app.db import orm
 from app.db.database_engine import async_session
-from app.service.impl.auth_service import AuthService
+from app.authentication.service.auth_service import AuthService
 
 router = APIRouter()
 

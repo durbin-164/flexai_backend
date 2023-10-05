@@ -4,14 +4,13 @@ from abc import ABC, abstractmethod
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api import model
 from app.db import orm
 from app.db.repository.irepository import IRepository
 from app.db.repository.sqlalchemy_repository import SQLAlchemyRepository
 
 
 class IUnitOfWork(ABC):
-    user_repository: IRepository[orm.User, model.user.User]
+    user_repository: IRepository[orm.User, app.auth.model.user.User]
 
     async def __aenter__(self) -> IUnitOfWork:
         return self
@@ -35,8 +34,8 @@ class UnitOfWork(IUnitOfWork):
 
     async def __aenter__(self):
         self.async_session = self.session_factory()  # type: AsyncSession
-        self.user_repository = SQLAlchemyRepository[orm.User, model.user.User](self.async_session, orm.User,
-                                                                               model.user.User)
+        self.user_repository = SQLAlchemyRepository[orm.User, app.auth.model.user.User](self.async_session, orm.User,
+                                                                                        app.auth.model.user.User)
         return await super().__aenter__()
 
     async def __aexit__(self, *args):

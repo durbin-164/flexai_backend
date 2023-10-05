@@ -1,13 +1,9 @@
-from typing import Optional, Dict, cast, Any, Annotated
+from typing import Annotated
 
 from fastapi import HTTPException, Depends, Security
-from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
-from fastapi.security import OAuth2, SecurityScopes
-from fastapi.security.utils import get_authorization_scheme_param
-from starlette.requests import Request
-from starlette.status import HTTP_401_UNAUTHORIZED
+from fastapi.security import SecurityScopes
 
-from app.constant.application_enum import ScopeEnum
+from app.authentication.constant.auth_enum import ScopeEnum
 from app.core.security import oauth2_scheme
 from app.db import orm
 

@@ -1,12 +1,11 @@
 from sqlalchemy import select, update
 
-from app.api.model.user import UserUpdate, User, UserChangePaasword
+from app.authentication.model.user import UserUpdate, User
 from app.db import orm
 from app.db.database_engine import async_session
-from app.service.iuser_service import IUserService
 
 
-class UserService(IUserService):
+class UserService:
     async def get_all(self):
         async with async_session() as session:
             stmt = select(orm.User)

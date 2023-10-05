@@ -4,7 +4,7 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 from pydantic import BaseModel
 
-from app.constant.application_enum import AuthProviderEnum
+from app.authentication.constant.auth_enum import AuthProviderEnum
 from app.core.config import settings
 from app.core.security import get_password_hash, generate_random_password
 from app.db import orm

@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
-from app.constant.application_enum import AuthProviderEnum
+from app.authentication.constant.auth_enum import AuthProviderEnum
 
 
 class User(BaseModel):

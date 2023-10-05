@@ -3,11 +3,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Security
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.api.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword, UserSignupExternal, \
+from app.authentication.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword, UserSignupExternal, \
     UserLoginExternal
-from app.constant.application_enum import ScopeEnum
+from app.authentication.constant.auth_enum import ScopeEnum
 from app.core.auth import get_current_active_user
-from app.service.impl.auth_service import AuthService
+from app.authentication.service.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=['auth'])
 

@@ -5,21 +5,19 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import joinedload
 from starlette import status
 
-from app.api.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword, UserSignupExternal, \
+from app.authentication.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword, UserSignupExternal, \
     UserLoginExternal
-from app.constant import application_constant
-from app.constant.application_enum import UserRoleEnum, AuthProviderEnum
+from app.authentication.service.external_auth_service import ExternalAuthService
+from app.authentication.constant.auth_enum import UserRoleEnum, AuthProviderEnum
 from app.core.auth import get_valid_user
 from app.core.config import settings
 from app.core.email_server import validate_email_format, EmailSchema, email_send
 from app.core.security import get_password_hash, verify_password, create_token
 from app.db import orm
 from app.db.database_engine import async_session
-from app.service.iauth_service import IAuthService
-from app.service.impl.external_auth_service import ExternalAuthService
 
 
-class AuthService(IAuthService):
+class AuthService:
     def __init__(self):
         self.external_auth_service = ExternalAuthService()
 
