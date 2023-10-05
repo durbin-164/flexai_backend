@@ -21,7 +21,7 @@ class UserService(IUserService):
             return "Nothing need to change."
 
         async with async_session() as session:
-            stmt = update(orm.User).where(orm.User.username == user.username).values(user_update_dict)
+            stmt = update(orm.User).where(orm.User.email == user.username).values(user_update_dict)
             await session.execute(stmt)
             await session.commit()
 

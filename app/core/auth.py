@@ -38,7 +38,7 @@ async def get_valid_user(security_scopes: SecurityScopes, token: str) -> orm.Use
         raise credentials_exception
 
     async with async_session() as session:
-        stmt = select(orm.User).filter(orm.User.username == username).options(
+        stmt = select(orm.User).filter(orm.User.email == username).options(
             joinedload(orm.User.permissions),
             joinedload(orm.User.roles).options(joinedload(orm.Role.permissions)),
             # joinedload(orm.Role.permissions)

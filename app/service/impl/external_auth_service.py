@@ -21,8 +21,7 @@ class GoogleTokenInfo(BaseModel):
 
 class ExternalAuthService:
     def get_user_from_google_token(self, token: str):
-        token_info = id_token.verify_oauth2_token(token, requests.Request(), settings.AUTH_PROVIDER.GOOGLE_CLIENT_ID)
-        google_token_info = GoogleTokenInfo(**token_info)
+        google_token_info = self.get_google_token_info(token=token)
 
         user = orm.User(
             email=google_token_info.email,
@@ -30,6 +29,7 @@ class ExternalAuthService:
             first_name=google_token_info.given_name,
             last_name=google_token_info.family_name,
             email_verified=google_token_info.email_verified,
+            picture=google_token_info.picture,
             is_active=True,
             is_super_user=False,
             is_staff=False
@@ -41,3 +41,9 @@ class ExternalAuthService:
         )
 
         return user, auth_provider
+
+    def get_google_token_info(self, token: str):
+        token_info = id_token.verify_oauth2_token(token, requests.Request(),
+                                                  settings.AUTH_PROVIDER.GOOGLE_CLIENT_ID,
+                                                  clock_skew_in_seconds=5)
+        return GoogleTokenInfo(**token_info)

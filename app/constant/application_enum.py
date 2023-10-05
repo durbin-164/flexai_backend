@@ -22,3 +22,8 @@ class ScopeEnum(str, Enum):
     PERMISSIONS_GET_ALL = 'permissions_get_all'
     PERMISSIONS_UPDATE = 'permissions_update'
     PERMISSIONS_DELETE = 'permissions_delete'
+
+
+class AuthProviderEnum(str, Enum):
+    INTERNAL = 'INTERNAL'
+    GOOGLE = 'GOOGLE'

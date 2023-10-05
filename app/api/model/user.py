@@ -6,17 +6,16 @@ from app.constant.application_enum import AuthProviderEnum
 
 
 class User(BaseModel):
-    username: str
+    email: EmailStr
     first_name: str
     last_name: str
-    email: Optional[str]
     phone: Optional[str]
 
 
 class UserSignup(BaseModel):
     email: EmailStr = Field(examples=['user1@example.com'])
     password: str = Field(min_length=5, examples=['12345'])
-    phone: str = Field(min_length=5, examples=["+8801711244334"])
+    phone: Optional[str] = Field(min_length=5, examples=["+8801711244334"], default=None)
     first_name: str = Field(min_length=2, examples=['ABC'])
     last_name: str = Field(min_length=2, examples=['XYZ'])
 
@@ -29,6 +28,11 @@ class UserSignupExternal(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr = Field(examples=['user1@example.com'])
     password: str = Field(min_length=5, examples=['12345'])
+
+
+class UserLoginExternal(BaseModel):
+    provider: AuthProviderEnum = Field(examples=[AuthProviderEnum.GOOGLE])
+    token: str
 
 
 class LoginToken(BaseModel):

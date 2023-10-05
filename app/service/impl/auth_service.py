@@ -1,12 +1,15 @@
 from fastapi import HTTPException
+from fastapi.security import SecurityScopes
 from pydantic import EmailStr
 from sqlalchemy import select, update
 from sqlalchemy.orm import joinedload
 from starlette import status
 
-from app.api.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword, UserSignupExternal
+from app.api.model.user import UserSignup, UserLogin, LoginToken, User, UserChangePaasword, UserSignupExternal, \
+    UserLoginExternal
 from app.constant import application_constant
 from app.constant.application_enum import UserRoleEnum, AuthProviderEnum
+from app.core.auth import get_valid_user
 from app.core.config import settings
 from app.core.email_server import validate_email_format, EmailSchema, email_send
 from app.core.security import get_password_hash, verify_password, create_token
@@ -41,6 +44,7 @@ class AuthService(IAuthService):
 
         async with async_session() as session:
             user = await self.add_user_in_db(session=session, user=user)
+            user.password = get_password_hash(user_signup.password) # if user already singup with external, then just change the password.
             auth_provider.user_id = user.id
             auth_provider.provider_user_id = str(user.id)
             await self.add_user_auth_provider(session=session, user=user, auth_provider=auth_provider)
@@ -50,7 +54,7 @@ class AuthService(IAuthService):
 
         return f"user created successfully with user_id: {user.id}"
 
-    async def user_external_signup(self, user_signup: UserSignupExternal):
+    async def external_signup(self, user_signup: UserSignupExternal):
         if user_signup.provider == AuthProviderEnum.GOOGLE:
             user, auth_provider = self.external_auth_service.get_user_from_google_token(user_signup.token)
             async with async_session() as session:
@@ -95,14 +99,12 @@ class AuthService(IAuthService):
         return user
 
     async def add_user_auth_provider(self, session, user: orm.User, auth_provider: orm.AuthProvider):
-        # auth_providers = await user.auth_providers.load()
         existing_provider = [p.provider_name for p in user.auth_providers]
         if auth_provider.provider_name in existing_provider:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=f"Already have an account.",
             )
-
         session.add(auth_provider)
 
     async def send_signup_conformation_mail(self, email: EmailStr):
@@ -118,29 +120,50 @@ class AuthService(IAuthService):
         await email_send(email=email_verification_schema)
 
     async def login(self, user_login: UserLogin):
+        user = await self.get_login_user(email=user_login.email, auth_provider=AuthProviderEnum.INTERNAL)
+        if not verify_password(password=user_login.password, hashed_password=user.password):
+            raise HTTPException(
+                detail="Invalid password",
+                status_code=status.HTTP_401_UNAUTHORIZED
+            )
+
+        return await self.get_login_token(email=user.email)
+
+    async def get_login_token(self, email: EmailStr):
+        return LoginToken(
+            access_token=create_token(data={"sub": email}),
+            token_type="bearer",
+            refresh_token=create_token(data={"sub": email},
+                                       expires_delta=settings.jwt.refresh_token_expire_minutes)
+        )
+
+    async def external_login(self, user_login_external: UserLoginExternal):
+        if user_login_external.provider == AuthProviderEnum.GOOGLE:
+            google_token_info = self.external_auth_service.get_google_token_info(token=user_login_external.token)
+            user = await self.get_login_user(email=google_token_info.email,
+                                             auth_provider=AuthProviderEnum.GOOGLE)
+        else:
+            raise HTTPException(
+                detail="Invalid auth provider.",
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
+        return await self.get_login_token(email=user.email)
+
+    async def get_login_user(self, email: EmailStr, auth_provider: AuthProviderEnum):
         async with async_session() as session:
-            stmt = select(orm.User).filter(orm.User.email == user_login.email).limit(1)
+            stmt = select(orm.User).join(orm.AuthProvider, orm.User.id == orm.AuthProvider.user_id).where(
+                orm.User.email == email,
+                orm.AuthProvider.provider_name == auth_provider).limit(1)
             user = await session.execute(stmt)
             user = user.scalar()
             if not user or not user.is_active:
                 raise HTTPException(
-                    detail="Invalid username.",
-                    status_code=status.HTTP_401_UNAUTHORIZED
-                )
-            if not verify_password(password=user_login.password, hashed_password=user.password):
-                raise HTTPException(
-                    detail="Invalid password",
+                    detail="Email not found. Please signup.",
                     status_code=status.HTTP_401_UNAUTHORIZED
                 )
 
-            user_token = LoginToken(
-                # access_token=create_token(data={"sub": user.username, "scopes": ["me"]}),
-                access_token=create_token(data={"sub": user.email}),
-                token_type="bearer",
-                refresh_token=create_token(data={"sub": user.email},
-                                           expires_delta=settings.jwt.refresh_token_expire_minutes)
-            )
-            return user_token
+        return user
 
     async def change_password(self, user: User, password_change: UserChangePaasword):
         if not verify_password(password=password_change.previous_password, hashed_password=user.password):
@@ -157,3 +180,18 @@ class AuthService(IAuthService):
             await session.commit()
 
         return 'Successfully change password'
+
+    async def conform_token(self, token: str):
+        security_scopes = SecurityScopes()
+        user = await get_valid_user(security_scopes=security_scopes,
+                                    token=token)
+
+        if user.email_verified:
+            return "Already user verified"
+
+        async with async_session() as session:
+            stmt = update(orm.User).where(orm.User.email == user.email).values(email_verified=True)
+            await session.execute(stmt)
+            await session.commit()
+
+        return "Successfully user verified."

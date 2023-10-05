@@ -7,6 +7,7 @@ class JWTSettings(BaseModel):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_minutes: int = 1440  # 1 day
+    verification_token_expire_minutes: int = 1440
 
 
 class DBSettings(BaseModel):
@@ -27,6 +28,11 @@ class EMILSettings(BaseModel):
     FROM: str
     PORT: int = 465
     SERVER: str = "smtp.gmail.com"
+    SIGNUP_EMAIL_SUBJECT: str = 'Conform Your Registration'
+    SIGNUP_EMAIL_BODY: str = """
+    <p>Welcome, Please confirm your email by clicking this link:</p>
+    <p><a href="{}">Click here to confirm</a></p>
+    """
 
 
 class AppSettings(BaseModel):
@@ -35,6 +41,16 @@ class AppSettings(BaseModel):
     port: int = 8080
     token_url: str = '/auth/token'
     url: str = "http://localhost:8080"
+    auth_conform_url: str = f"{url}/auth/confirm?token={{}}"
+
+
+class AuthProviderSettings(BaseModel):
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+
+
+class AuthSettings(BaseModel):
+    COOKIE_NAME: str = 'Authorization'
 
 
 class Settings(BaseSettings):
@@ -48,6 +64,8 @@ class Settings(BaseSettings):
     db: DBSettings
     jwt: JWTSettings
     EMAIL: EMILSettings
+    AUTH_PROVIDER: AuthProviderSettings
+    AUTH: AuthSettings = AuthSettings()
 
 
 settings = Settings()

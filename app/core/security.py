@@ -2,15 +2,16 @@ import random
 import string
 from datetime import datetime, timedelta
 
-from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from passlib.context import CryptContext
 
+from app.core.auth_method import OAuth2PasswordBearerWithCookie
 from app.core.config import settings
 
-oauth2_scheme = OAuth2PasswordBearer(
+oauth2_scheme = OAuth2PasswordBearerWithCookie(
     tokenUrl=settings.app.token_url
 )
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

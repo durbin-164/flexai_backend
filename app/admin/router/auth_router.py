@@ -1,3 +1,4 @@
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Request, Depends, Security, HTTPException
@@ -8,9 +9,10 @@ from starlette import status
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.templating import Jinja2Templates
 
-from app.admin.service.auth_service import COOKIE_NAME, get_active_stuff_user
+from app.admin.service.auth_service import get_active_stuff_user
 from app.api.model.user import UserLogin
 from app.constant.application_enum import ScopeEnum
+from app.core.config import settings
 from app.core.security import get_password_hash
 from app.db import orm
 from app.db.database_engine import async_session
@@ -34,13 +36,13 @@ async def login(request: Request):
 @router.post("/", response_class=HTMLResponse)
 async def login_post(request: Request, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     user_login = UserLogin(
-        username=form_data.username,
+        email=form_data.username,
         password=form_data.password
     )
     user_token = await auth_service.login(user_login=user_login)
     response = RedirectResponse("/admin/dashboard", status.HTTP_302_FOUND)
     response.set_cookie(
-        key=COOKIE_NAME,
+        key=settings.AUTH.COOKIE_NAME,
         value=f"Bearer {user_token.access_token}"
     )
     return response
@@ -83,9 +85,8 @@ async def add_user(request: Request, user: Annotated[orm.User, Security(get_acti
     roles = form_data.getlist("roles")
 
     new_user = orm.User(
-        username=form_data.get('username'),
-        password=get_password_hash(form_data.get('password')),
         email=form_data.get('email'),
+        password=get_password_hash(form_data.get('password')),
         phone=form_data.get('phone'),
         first_name=form_data.get('first_name'),
         last_name=form_data.get('last_name'),
@@ -95,7 +96,7 @@ async def add_user(request: Request, user: Annotated[orm.User, Security(get_acti
     )
 
     async with async_session() as session:
-        stmt = select(orm.User).filter(orm.User.username == new_user.username).limit(1)
+        stmt = select(orm.User).filter(orm.User.email == new_user.email).limit(1)
         db_user = await session.execute(stmt)
         db_user = db_user.scalar_one_or_none()
         if db_user:
@@ -140,8 +141,8 @@ async def get_users(request: Request,
 
 
 @router.get("/edit-user/{user_id}", response_class=HTMLResponse)
-async def get_edit_user_form(request: Request, user_id: int, user: Annotated[orm.User, Security(get_active_stuff_user,
-                                                                                                scopes=[
+async def get_edit_user_form(request: Request, user_id: uuid.UUID, user: Annotated[orm.User, Security(get_active_stuff_user,
+                                                                                                 scopes=[
                                                                                                     ScopeEnum.USERS_GET_ALL,
                                                                                                     ScopeEnum.USERS_UPDATE,
                                                                                                     ScopeEnum.ROLES_GET,
@@ -169,7 +170,7 @@ async def get_edit_user_form(request: Request, user_id: int, user: Annotated[orm
 
 
 @router.post("/edit-user/{user_id}", response_class=HTMLResponse)
-async def post_edit_user(request: Request, user_id: int, user: Annotated[orm.User, Security(get_active_stuff_user,
+async def post_edit_user(request: Request, user_id: uuid.UUID, user: Annotated[orm.User, Security(get_active_stuff_user,
                                                                                             scopes=[
                                                                                                 ScopeEnum.USERS_GET_ALL,
                                                                                                 ScopeEnum.USERS_UPDATE,
@@ -188,7 +189,6 @@ async def post_edit_user(request: Request, user_id: int, user: Annotated[orm.Use
 
         edit_user.first_name = form_data.get('first_name')
         edit_user.last_name = form_data.get('last_name')
-        edit_user.email = form_data.get('email')
         edit_user.phone = form_data.get('phone')
         edit_user.is_active = form_data.get('is_active').lower() == "true"
         edit_user.is_staff = form_data.get('is_staff').lower() == "true"
